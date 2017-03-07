@@ -1,0 +1,8 @@
+注册
+{"jsonType":"loginInfo","userName":15055305685,"passWord":"5585840"}
+
+登入
+{"jsonType":"loginInfo","userName":15055305685,"passWord":"123456"}
+
+控制
+{"jsonType":"controlInfo","freq":100,"userName":"15055305685","productMac":"00:CA:01:0F:00:01","sampleNum":5,"fileName":"blue"}

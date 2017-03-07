@@ -1,0 +1,1 @@
+obj-$(CONFIG_AD7606_DRIVER)   += ad7606_driver.o

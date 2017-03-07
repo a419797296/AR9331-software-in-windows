@@ -1,0 +1,6 @@
+config AD7606_DRIVER
+	tristate "Custom AD7606 driver"
+	depends on GENERIC_GPIO
+	select AD7606_DRIVER
+	help
+	  This is an AD7606_DRIVER.
