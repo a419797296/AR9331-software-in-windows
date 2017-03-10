@@ -15,7 +15,7 @@ SOCKET_INTERFACE tty_interface;
 //----------------------------------serToNet服务进程------
 int serToNetFork()
 {
-    int nbytes,led_fp;
+    int nbytes;
     int allNum=0;
     char readbuff[256];
     char package[SOCKET_SER2NET_PACK_NUMS];
@@ -143,7 +143,7 @@ int serToNetFork()
 
 int ttyAth0Fork(int model)
 {
-    int nbytes,led_fp;
+    int nbytes;
     int allNum=0;
     char readbuff[1024];
     char package[SOCKET_SER2NET_PACK_NUMS];

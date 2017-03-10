@@ -1,7 +1,7 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 #include "socket_driver.h"
-
+#include "socket_server.h"
 /* ------------------------------------------------------------------------------------------------
  *                                               Types
  * ------------------------------------------------------------------------------------------------
@@ -36,6 +36,9 @@ typedef unsigned char   bool;
  #else
  #define PLOG(fmt, args...)
  #endif
+
+ #define MAX_DATA_BUFF			1024
+ #define MAX_CLIENT_NUM		5
 typedef enum
 {
 	JSON_TYPE_GETWAY_TO_ZIGBEE = 1,
@@ -47,8 +50,17 @@ typedef enum
 	JSON_TYPE_ERROR
 }jsonType;
 
+ typedef struct{
+	char		*data;
+	int		length;
+	int 		orig_fd;
+	int 		dest_fd[MAX_CLIENT_NUM];
+	int 		dest_cnt;
+}T_Data_Info, *PT_Data_Info;
+
 #define HARDWARE_VERSION				"V3.0"
 #define	SOFTWARE_VERSION				"20161218"
+#define 	DATA_FIFO_PATH				"/tmp/data_fifo"
 
 #define	LOW_POWER_ALARM_LEVEL		20
 

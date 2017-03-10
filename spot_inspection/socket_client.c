@@ -13,6 +13,7 @@
 #include "socket_client.h"
 #include "com_tools.h"
 #include "main.h"
+#include "ser2net.h"
 // #include <signal.h>
 // #include <sys/ipc.h>
 // #include <sys/shm.h>
@@ -21,7 +22,7 @@ SOCKET_INTERFACE socket_client_interface;
 //----------------------------------客户端模式------
 int socketClientFork(char *ip, int port)
 {
-	int nbytes,led_fp;
+	int nbytes;
 	static char readbuff[200];	
 
 	strcpy(socket_client_interface.ip, ip);
@@ -29,6 +30,7 @@ int socketClientFork(char *ip, int port)
 
 	PLOG("\n\n----------------------prepare connecting to the %s: %d---------------------\n",ip,port);
 	socket_client_interface.socket_fd = socketConnect(ip,port); 
+	//socket_client_interface.socket_fd = socketConnect(SOCKET_SER2NET_IP,SOCKET_SER2NET_PORT);
 	if (socket_client_interface.socket_fd <0)
 	{
 		// PLOG("------------------connection failed---------------------\n");

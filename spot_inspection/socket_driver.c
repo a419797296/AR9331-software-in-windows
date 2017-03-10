@@ -45,7 +45,7 @@ int socketServerInitNoneBlock(int portnumber)
         perror("bind to port 5000 failure");
         return -1;
     }
-    if(listen(servfd,10)<0)
+    if(listen(servfd,1)<0)
     {
         perror("listen error");
         return -1;
@@ -81,7 +81,7 @@ int socketServerAccept(int servfd)
     bzero(szIp,17);
     inet_ntop(AF_INET,&cliaddr.sin_addr,szIp,16);
     printf("from client IP:%s,Port:%d\n",szIp,ntohs(cliaddr.sin_port));
-    char buf[256];
+    //char buf[256];
     //time_t t;
     //time(&t);
     //int datalen=sprintf(buf,"Server:%u\n",(unsigned int)t);
@@ -124,7 +124,7 @@ int socketInit(int portnumber)
 	} 
 
 	/* 设置允许连接的最大客户端数 */ 
-	if(listen(sockfd,5)==-1) 
+	if(listen(sockfd,1)==-1) 
 	{ 
 		fprintf(stderr,"Listen error:%s\n\a",strerror(errno)); 
 		return -1;  

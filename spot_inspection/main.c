@@ -152,26 +152,27 @@ int open_fifos(char * fifo_path, SOCKET_INTERFACE *socket_interface)
 
 uint8 calc_system_soc(void)
 {
-	uint16 system_soc=0;
-	set_acqusition_para(10, 1, 1, "2");
-	channel_info=malloc_result_buf(acqusition_para.valid_channel_nums, acqusition_para.length);		// free(channel_info);
-	acqusition_ad_data(ad7606_app.dev_fd, acqusition_para, channel_info);
-	system_soc = *(channel_info->data);
-	//PLOG("the system_soc is %d\n",system_soc);
-	free(channel_info);
-	if(system_soc > 4200)
-		system_soc = 4200;
-	if(system_soc < 3200)
-		system_soc = 3200;
-	system_soc = (system_soc - 3200) / 10;
-	return (uint8)system_soc;
+    uint16 system_soc=0;
+    set_acqusition_para(10, 1, 1, "2");
+    channel_info=malloc_result_buf(acqusition_para.valid_channel_nums, acqusition_para.length);		// free(channel_info);
+    acqusition_ad_data(ad7606_app.dev_fd, acqusition_para, channel_info);
+    system_soc = *(channel_info->data);
+    //PLOG("the system_soc is %d\n",system_soc);
+    free(channel_info);
+    if(system_soc > 4200)
+        system_soc = 4200;
+    if(system_soc < 3200)
+        system_soc = 3200;
+    system_soc = (system_soc - 3200) / 10;
+    return (uint8)system_soc;
 }
 
 //----------------------------------------------main
 int main(int argc,char *argv[])
 {
     char opt;
-    char buf_r[200]= {0};
+    int fifo_rd_fd;
+    //char buf_r[200]= {0};
     //sleep(20);
     //-----------------------------------------------------------------------
     ad7606_app.dev_fd 	= -1;
@@ -184,11 +185,32 @@ int main(int argc,char *argv[])
         parse_opt(opt, optarg);
     }
 
+
+    if (access(DATA_FIFO_PATH,F_OK) == -1)
+    {
+        printf("**%s not exit,now create it**\n",DATA_FIFO_PATH);
+        if (mkfifo(DATA_FIFO_PATH,0666) < 0)
+        {
+            printf("##Can't create fifo file!!##\n");
+            exit(1);
+        }
+    }
+	printf("1111111111\n");
+    fifo_rd_fd=open(DATA_FIFO_PATH,O_RDONLY|O_NONBLOCK);
+	printf("22222\n");
+    if(fifo_rd_fd==-1)
+    {
+printf("333\n");
+		perror("open");
+        exit(1);
+    }
+	printf("444\n");
+
     //--------------------------------------------------------------------------open the socket fifo file
-    open_fifos(SOCKET_SER2NET_FIFO_PATH, &socket_ser2net_interface);
+    //open_fifos(SOCKET_SER2NET_FIFO_PATH, &socket_ser2net_interface);
     //open_fifos(TTY_FIFO_PATH, &tty_interface);
-    open_fifos(SOCKET_CLIENT_FIFO_PATH, &socket_client_interface);
-    open_fifos(SOCKET_SERVER_FIFO_PATH, &socket_server_interface);
+    //open_fifos(SOCKET_CLIENT_FIFO_PATH, &socket_client_interface);
+    //open_fifos(SOCKET_SERVER_FIFO_PATH, &socket_server_interface);
     //--------------------------------------------------------------------------open the ad7606 driver file
 
     ad7606_app.dev_fd = open(ad7606_app.dev_path, O_RDWR);
@@ -199,12 +221,12 @@ int main(int argc,char *argv[])
         return -1;
     }
     //--------------------------------------------------------------------------init the server socket_fd
-    socket_server_interface.server_fd = socketServerInitNoneBlock(port);
-    if (socket_server_interface.server_fd < 0)
-    {
-        printf("soclet server init error\n");
-        return -1;
-    }
+    /* socket_server_interface.server_fd = socketServerInitNoneBlock(port);
+     if (socket_server_interface.server_fd < 0)
+     {
+         printf("soclet server init error\n");
+         return -1;
+     }*/
 
     /*tty_interface.fifo_rd_fd = open(TTY_DEV_PATH,O_RDWR);
     	if (tty_interface.fifo_rd_fd == -1){
@@ -223,11 +245,12 @@ int main(int argc,char *argv[])
     		}
 
     	}*/
-    	
+
 
 
     //--------------------------------------------------------------------------open the forks of ser2net socket_client, socket_server
-    if (enable_mode[0] == '1')
+	printf("888888888888888888888888888888888888\n");
+	if (enable_mode[0] == '1')
     {
         serToNetFork();
         //ttyAth0Fork(0);
@@ -235,13 +258,26 @@ int main(int argc,char *argv[])
     }
     if (enable_mode[1] == '1')
     {
-        socketServerFork(port);
-        printf("tried to start the server fork\n");
+        //socketServerFork(port);
+         printf("tried to start the server fork\n");
+        serverForkInit(port);
+       
     }
     if (enable_mode[2] == '1')
     {
         socketClientFork(cloud_ip, port);
         printf("tried to start the client fork\n");
+    }
+    while(1)
+    {
+        int  nread;
+        char buf_r[200];
+        {
+            nread=read(fifo_rd_fd,buf_r,sizeof(buf_r));
+            buf_r[nread] = 0;
+            PLOG("read %s from fifo\n",buf_r);
+			sleep(1);
+        }
     }
     socket_bussiness();
     return 0;
