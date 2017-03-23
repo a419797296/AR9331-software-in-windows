@@ -52,7 +52,7 @@ typedef enum
 
  typedef struct{
 	char		*data;
-	int		length;
+	int			length;
 	int 		orig_fd;
 	int 		dest_fd[MAX_CLIENT_NUM];
 	int 		dest_cnt;

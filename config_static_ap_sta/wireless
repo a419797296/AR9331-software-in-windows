@@ -9,7 +9,16 @@ config wifi-device 'radio0'
 	option txpower '30'
 	option country 'US'
 
-config wifi-iface
+config wifi-iface 'ap'
+	option device 'radio0'
+	option mode 'ap'
+	option encryption 'none'
+	option network 'lan'
+	option macaddr '00:ca:01:0f:00:02'
+	option disabled '0'
+	option ssid 'Spot_inspection'
+
+config wifi-iface 'sta'
 	option network 'wan'
 	option ssid 'HUISHU'
 	option encryption 'psk2'
@@ -18,11 +27,5 @@ config wifi-iface
 	option bssid '8C:BE:BE:29:B6:E6'
 	option key 'huishu505'
 	option macaddr '00:ca:01:0f:00:01'
+	option disabled '0'
 
-config wifi-iface
-	option device 'radio0'
-	option mode 'ap'
-	option ssid 'HUISHU_Blue'
-	option encryption 'none'
-	option network 'lan'
-	option macaddr '00:ca:01:0f:00:02'
