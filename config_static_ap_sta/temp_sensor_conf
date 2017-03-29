@@ -1,3 +1,0 @@
-config MySection
-	option temperature 25.8
-	option temperature_calibration 10

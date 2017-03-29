@@ -1,0 +1,22 @@
+config socket-iface 'server'
+	option ip '1.1.1.1'
+	option port '3333'
+
+config socket-iface 'cloud'
+	option ip '139.196.240.105'
+	option websit 'www.chukang.xin'
+	option port '9518'
+
+config socket-iface 'ser2net'
+	option ip '127.0.0.1'
+	option port '6666'
+
+config product-info 'product_info'
+	option mac '00:ca:01:0f:00:01'
+	option hw_vers '170327'
+	option sw_vers '170327'
+
+config parameter 'para'
+	option interval '15' 
+
+

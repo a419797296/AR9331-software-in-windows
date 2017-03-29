@@ -92,7 +92,7 @@ short int ad7606_ReadBytes(void)
 	}
 	// PLOG("the AD value is: %d\n", usData);
 	//usData=(long)usData*5000 / 32767;
-	// printf("the volt is: %d\n", usData);
+	// PLOG("the volt is: %d\n", usData);
 
 	return usData;		
 }
@@ -101,7 +101,7 @@ void ad7606_Scan(short int*s_adc_now) 		/* 此函数代码按照时序编写 */
 {
 	int i;
 	/* BUSY = 0 时.ad7606处于空闲状态ad转换结束 */
-	// printf("the AD7606_BUSY is: %d\n", AD_BUSY_STAT());	
+	// PLOG("the AD7606_BUSY is: %d\n", AD_BUSY_STAT());	
 	while (gpio_get_value(AD7606_BUSY)==1); //等待ad7606空闲
 	if(gpio_get_value(AD7606_BUSY)==0)   
     {

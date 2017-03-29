@@ -1,6 +1,0 @@
-# Put your custom commands here that should be executed once
-# the system init finished. By default this file does nothing.
-insmod /root/ad7606_driver.ko
-ser2net
-/root/spot_inspection_app -e 110&
-exit 0
