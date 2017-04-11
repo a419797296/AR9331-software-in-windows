@@ -32,7 +32,6 @@ int socketServerFork(int port)
 {
     int nbytes;
     static char readbuff[200];
-    char macAddrBuff[18]= {0};
     // PLOG("\n\n----------------------------new fork is starting------------------\n");
     PLOG("----------------------------here is socket server, waiting for connection...------------------\n");
     // PLOG("socket_server_interface.fifo_path is %s\n", socket_server_interface.fifo_path);
@@ -46,8 +45,7 @@ int socketServerFork(int port)
     connect_flag[SOCKET_SERVER_NUM]=1;
     system("/root/led.sh led_on tp-link:blue:system");	//light on the led
     // socket_server_interface.is_alive = 1;
-    getMacAddr("eth1",macAddrBuff);
-    sendProductInfo(socket_server_interface.socket_fd,macAddrBuff);
+    sendProductInfo(socket_server_interface.socket_fd);
     if (fork()==0)
     {
         //open fifo
@@ -104,7 +102,6 @@ int serverForkInit(int port)
         int sin_size;
         struct sockaddr_in server_addr;
         struct sockaddr_in client_addr;
-	 char macAddrBuff[18]= {0};
         sin_size=sizeof(client_addr);
 
 
@@ -154,8 +151,7 @@ PLOG("after 000\n");
             strcpy(t_client_info[connected_nums].client_ip,inet_ntoa(client_addr.sin_addr));
             fprintf(stderr,"Server get connection from %s\n",t_client_info[connected_nums].client_ip); // 将网络地址转换成.字符串
 		
-		getMacAddr("eth1",macAddrBuff);
-    		sendProductInfo(t_client_info[connected_nums].fd,macAddrBuff);
+    		sendProductInfo(t_client_info[connected_nums].fd);
 		serverForkRun(t_client_info[connected_nums].fd);
 		connected_nums++;
         }

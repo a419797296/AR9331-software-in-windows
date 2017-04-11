@@ -27,7 +27,7 @@
 #define AD7606_IOC_START				_IO(AD7606_IOC_MAGIC,4)
 
 // #define DEBUG				1//Byte
-// #define PDEBUG				0//Byte
+ #define PDEBUG				0//Byte
 #ifdef PDEBUG
  #define PLOG(fmt, args...) printk( KERN_DEBUG "AD7606: " fmt, ## args)
  #else

@@ -4,7 +4,6 @@ config socket-iface 'server'
 
 config socket-iface 'cloud'
 	option ip '139.196.240.105'
-	option websit 'www.chukang.xin'
 	option port '9518'
 
 config socket-iface 'ser2net'
@@ -14,9 +13,11 @@ config socket-iface 'ser2net'
 config product-info 'product_info'
 	option mac '00:ca:01:0f:00:01'
 	option hw_vers '170327'
-	option sw_vers '170327'
+	option sw_vers '170411'
 
 config parameter 'para'
-	option interval '15' 
+	option virb_shift '27' 
+	option package_freq '20'
+	option enable_mode '110'
 
 

@@ -4,20 +4,20 @@
 
 START=60
 
-PROG=/bin/spotInspection
-NAME=spotInspection
+PROG=/bin/spot_inspection
+NAME=spot_inspection
 
 
 start()
 {
-	if [ $(pgrep -f spotInspection |wc -l) = "1" ]
+	if [ $(pgrep -f spot_inspection |wc -l) = "1" ]
 	then
-		kill $(pidof spotInspection)
+		kill $(pidof spot_inspection)
 	fi
-	/bin/spotInspection
+	/bin/spot_inspection
 }
 
 stop()
 {
-	kill $(pidof spotInspection)
+	kill $(pidof spot_inspection)
 }

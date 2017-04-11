@@ -54,7 +54,7 @@ int socketClientFork(char *ip, int port)
 	connect_flag[SOCKET_CLIENT_NUM]=1;
 	system("/root/led.sh led_on tp-link:blue:system");	//light on the led
 
-	sendProductInfo(socket_client_interface.socket_fd,"00:CA:01:0F:00:01");
+	sendProductInfo(socket_client_interface.socket_fd);
 	if (fork()==0)         
 	{
 		//socketWrite(cloud_socket_id,ad_result,2);

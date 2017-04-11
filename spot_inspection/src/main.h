@@ -58,18 +58,23 @@ typedef enum
 	int 		dest_cnt;
 }T_Data_Info, *PT_Data_Info;
 
+  typedef struct{
+	char		hw_vers[8];
+	char		sw_vers[8];
+	char 		mac[18];
+}PRODUCT_INFO;
+
 #define HARDWARE_VERSION				"V3.0"
 #define	SOFTWARE_VERSION				"20161218"
 #define 	DATA_FIFO_PATH				"/tmp/data_fifo"
 
 #define	LOW_POWER_ALARM_LEVEL		20
 
-extern int DEBUG, MATLAB_TEST;
+extern int DEBUG;
 extern int package_freq;
 extern char enable_mode[3];
 extern char connect_flag[3];
 extern int shift_virb;
-
-extern uint8 calc_system_soc(void);
+extern PRODUCT_INFO produc_info;
 
 #endif

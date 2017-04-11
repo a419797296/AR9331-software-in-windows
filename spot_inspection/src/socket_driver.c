@@ -297,7 +297,7 @@ int socketRead(int new_fd,char *readbuff,int lenth)
 
 }
 //--------------------------------socket发送-----------
-int socketWrite(int new_fd,unsigned char *writebuff,int lenth)
+int socketWrite(int new_fd,char *writebuff,int lenth)
 {
 	int nbytes;
 	writebuff[lenth]='\r';

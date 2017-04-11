@@ -237,8 +237,11 @@ void doControlInfo(char *receivedData)
     char *channels, channel_nums;
     char channel_list[8]= {0};
     int i,j;
+	int data_idx;
     char *out, *disp;
+	short int *pdata;   //the data addr
     int is_exist_channel_info = 0;
+	
     // char *end_flag = "\0";
     PLOG("receivedData = %s\n",receivedData);
 
@@ -266,7 +269,10 @@ void doControlInfo(char *receivedData)
         acqusition_ad_data(ad7606_app.dev_fd, acqusition_para, channel_info);
         for (i = 0; i < channel_nums; ++i)
         {
-            HexToStr(data_hex2str, (char *)(*(channel_info+i)).data, (length<<1));
+		pdata = (*(channel_info+i)).data;
+		for (data_idx= 0; data_idx < length; ++data_idx)
+			*(pdata + data_idx) = *(pdata + data_idx)  - shift_virb;				//shift the hardware erro
+		HexToStr(data_hex2str, (char *)pdata, (length<<1));
             PLOG("%s\n",data_hex2str);
 
             if (! is_exist_channel_info)
@@ -338,10 +344,21 @@ void doControlInfo(char *receivedData)
             acqusition_ad_data(ad7606_app.dev_fd, acqusition_para, channel_info);
             for (i = 0; i < channel_nums; ++i)
             {
-                if ((data_residual_length != 0) && (j == data_packages - 1))  //如果分包后还有数据，而且是最后一包数据
-                    HexToStr(data_hex2str, (char *)(*(channel_info+i)).data, (data_residual_length<<1));  //转换剩下的个数
+		pdata = (*(channel_info+i)).data;
+
+			
+		if ((data_residual_length != 0) && (j == data_packages - 1))  //如果分包后还有数据，而且是最后一包数据
+			{
+			for (data_idx= 0; data_idx < data_residual_length; ++data_idx)
+				*(pdata + data_idx) = *(pdata + data_idx)  - shift_virb;				//shift the hardware erro
+			HexToStr(data_hex2str, (char *)pdata, (data_residual_length<<1));  //转换剩下的个数
+		}
                 else
-                    HexToStr(data_hex2str, (char *)(*(channel_info+i)).data, (PACKAGE_LENGTH<<1));
+                	{
+			for (data_idx= 0; data_idx < PACKAGE_LENGTH; ++data_idx)
+				*(pdata + data_idx) = *(pdata + data_idx)  - shift_virb;				//shift the hardware erro
+                    HexToStr(data_hex2str, (char *)pdata, (PACKAGE_LENGTH<<1));
+                }
 
                 if (! is_exist_channel_info)
                 {

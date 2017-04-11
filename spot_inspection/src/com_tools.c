@@ -9,13 +9,13 @@
 #include "com_tools.h"
 #include "main.h"
 #include "cJSON.h"
-
+#include "ad7606_app.h"
 //-----------------------------------------------------
 int getMacAddr(char *device,char * macAddrBuff)
 {
     FILE *read_fp;
     int chars_read;
-    int ret;
+    int ret = -1;
     char cmd_buff[60]={0};
     sprintf(cmd_buff,"ifconfig %s|grep 'HWaddr'|awk -F '[ ]+' '{print $5}'",device);
     // sprintf(cmd_buff,"ifconfig %s|grep 'HWaddr'|awk -F '[ ]+' '{print $5}|tr -d '\n'",device);
@@ -25,38 +25,39 @@ int getMacAddr(char *device,char * macAddrBuff)
     {
         chars_read=fread(macAddrBuff,sizeof(char),20,read_fp);
         *(macAddrBuff+17) = 0;   //the length of macAddr is 17
-        PLOG("the macAddr is %s\n", macAddrBuff);
+        printf("the macAddr is %s\n", macAddrBuff);
         if (chars_read>0)
         {
-            ret=1;/* code */
+            ret = 0;/* code */
         }
         else
         {
-            ret=-1;
+            ret = -1;
         }
         pclose(read_fp);
     }
     else
     {
-        ret=-1;
+        ret = -1;
     }
     return ret;
 }
 
 //-----------------------------------------------------
-void sendProductInfo(int sockfd,char * macAddr)
+void sendProductInfo(int sockfd)
 {
 	cJSON *root;
 	char *out;
+
 	root=cJSON_CreateObject();
 	cJSON_AddNumberToObject(root, "jsonType", JSON_TYPE_PRODUCT_INFO);
-	cJSON_AddStringToObject(root, "productMac", macAddr);
-    cJSON_AddStringToObject(root, "hardware", HARDWARE_VERSION);
-    cJSON_AddStringToObject(root, "software", SOFTWARE_VERSION);
+	cJSON_AddStringToObject(root, "productMac", produc_info.mac);
+    cJSON_AddStringToObject(root, "hardware", produc_info.hw_vers);
+    cJSON_AddStringToObject(root, "software", produc_info.sw_vers);
 	out=cJSON_PrintUnformatted(root);
 	// sprintf(outcmd,"%s",out);	
-	 // PLOG("%d\n",strlen(out));		
-	socketWriteNoEnd(sockfd,out,strlen(out)+1);
+	 // printf("%d\n",strlen(out));	
+	socketWrite(sockfd,out,strlen(out));
 	cJSON_Delete(root);	
 	free(out);
 }
@@ -99,9 +100,9 @@ int JsonResolveInt(char* dataString, char *str)
     char *res;
     char key[20];
     char value[5];
-    //PLOG("%s\n", dataString);
+    //printf("%s\n", dataString);
     sprintf(key,"%s\":",str);
-    //PLOG("%s\n", key);
+    //printf("%s\n", key);
         if (NULL != (index = strstr(dataString, key))){
             res = index + strlen(key);
             if (NULL != (index1 = strstr(res,"}"))){
@@ -188,6 +189,131 @@ int pow_of_two(int num)
         pow_num = -1;
     }
 
-    // PLOG("%d\n", pow_num);
+    // printf("%d\n", pow_num);
     return pow_num + 1;
 }
+
+//-----------------------------------------------------
+char * getSysUciCfgStr(char *filename,char *section,char *option,char * result)
+{
+    FILE *read_fp;
+    int chars_read;
+	char *ret;
+    char cmd_buff[60]={0};
+    sprintf(cmd_buff,"uci get %s.%s.%s",filename,section,option);
+    // sprintf(cmd_buff,"ifconfig %s|grep 'HWaddr'|awk -F '[ ]+' '{print $5}|tr -d '\n'",device);
+    read_fp=popen(cmd_buff,"r");
+
+    if (read_fp!=NULL)
+    {
+        chars_read=fread(result,sizeof(char),60,read_fp);
+
+        if (chars_read>0)
+        {
+            *(result+chars_read-1) = 0;   // the read result include '\n'
+            printf("the read config is %s\n", result);
+		ret =  result;
+        }
+        else
+        {
+            ret = NULL;
+        }
+        pclose(read_fp);
+    }
+    else
+    {
+        ret = NULL;
+    }
+    return ret;
+}
+//-----------------------------------------------------
+int getSysUciCfgNum(char *filename,char *section,char *option)
+{
+    FILE *read_fp;
+    int chars_read;
+	int ret;
+    char cmd_buff[60]={0};
+	char result[10] = {0};
+    sprintf(cmd_buff,"uci get %s.%s.%s",filename,section,option);
+    // sprintf(cmd_buff,"ifconfig %s|grep 'HWaddr'|awk -F '[ ]+' '{print $5}|tr -d '\n'",device);
+    read_fp=popen(cmd_buff,"r");
+
+    if (read_fp!=NULL)
+    {
+        chars_read=fread(result,sizeof(char),60,read_fp);
+
+        if (chars_read>0)
+        {
+		ret = atoi(result);
+            printf("the read config is %d\n", ret );
+        }
+        else
+        {
+            ret = -1;
+        }
+        pclose(read_fp);
+    }
+    else
+    {
+        ret = -1;
+    }
+    return ret;
+}
+//-----------------------------------------------------
+int setSysUciCfgStr(char *filename,char *section,char *option,char * parameter)
+{
+    char cmd_buff[60]={0};
+	int rst;
+	sprintf(cmd_buff,"uci set %s.%s.%s=%s",filename,section,option,parameter);
+	rst = system(cmd_buff);
+	system("uci commit");
+    return rst;
+}
+
+//-----------------------------------------------------
+int setSysUciCfgNum(char *filename,char *section,char *option,int parameter)
+{
+    char cmd_buff[60]={0};
+	int rst;
+    sprintf(cmd_buff,"uci set %s.%s.%s=%d",filename,section,option,parameter);
+	rst = system(cmd_buff);
+	system("uci commit");
+    return rst;
+}
+
+//-----------------------------------------------
+int calc_system_soc(void)
+{
+    uint16 system_soc=0;
+    set_acqusition_para(10, 1, 1, "2");
+    channel_info=malloc_result_buf(acqusition_para.valid_channel_nums, acqusition_para.length);		// free(channel_info);
+    acqusition_ad_data(ad7606_app.dev_fd, acqusition_para, channel_info);
+    system_soc = *(channel_info->data);
+    //PLOG("the system_soc is %d\n",system_soc);
+    free(channel_info);
+    if(system_soc > 4100)
+        system_soc = 4100;
+    if(system_soc < 3300)
+        system_soc = 3300;
+    system_soc = (system_soc - 3300) / 8;
+    return (int)system_soc;
+}
+
+int calc_shift_virb(void)
+{
+    int virb_shitf=0, sum = 0;
+	int Nums = 100;
+	int i;
+    set_acqusition_para(100, Nums, 1, "0");
+    channel_info=malloc_result_buf(acqusition_para.valid_channel_nums, acqusition_para.length);		// free(channel_info);
+    acqusition_ad_data(ad7606_app.dev_fd, acqusition_para, channel_info);
+	for(i=0;i<Nums;i++)
+		{
+		sum +=*(channel_info->data+i);
+	}
+	virb_shitf =sum / Nums;
+	if(((sum % Nums)<<1) > virb_shitf)    //four dropped and five accepted
+		virb_shitf ++;
+    return virb_shitf;
+}
+

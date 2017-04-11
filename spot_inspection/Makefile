@@ -49,7 +49,7 @@ define Package/spot_inspection/description
 endef
 
 define Package/spot_inspection/conffiles
-/etc/config/spot_inspection
+	/etc/config/spot_inspection
 endef
 
  
