@@ -66,6 +66,8 @@ int socketServerFork(int port)
                 PLOG("%d, %s\n",nbytes,readbuff);
                 PLOG("-------------------->与云服务器通讯异常！！！\n");
                 close(socket_server_interface.socket_fd);
+		close(socket_server_interface.server_fd);
+		close(socket_server_interface.fifo_wr_fd);
                 exit(0);
             }
             else

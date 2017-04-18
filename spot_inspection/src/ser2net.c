@@ -56,6 +56,7 @@ int serToNetFork()
                 PLOG("%d, %s\n",nbytes,readbuff);
                 PLOG("-------------------->与ser2net服务器通讯异常！！！\n");
                 close(socket_ser2net_interface.socket_fd);
+		close(socket_ser2net_interface.fifo_wr_fd);
                 exit(0);
             }
             else

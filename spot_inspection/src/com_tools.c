@@ -57,7 +57,7 @@ void sendProductInfo(int sockfd)
 	out=cJSON_PrintUnformatted(root);
 	// sprintf(outcmd,"%s",out);	
 	 // printf("%d\n",strlen(out));	
-	socketWrite(sockfd,out,strlen(out));
+	socketWriteNoEnd(sockfd,out,strlen(out)+1);
 	cJSON_Delete(root);	
 	free(out);
 }

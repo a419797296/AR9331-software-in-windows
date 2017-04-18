@@ -66,7 +66,7 @@ int socketClientFork(char *ip, int port)
 				fprintf(stderr,"Read Error:%s\n",strerror(errno)); 
 				PLOG("%d, %s\n",nbytes,readbuff);
 				PLOG("-------------------->与云服务器通讯异常！！！\n");
-
+				close(socket_client_interface.fifo_wr_fd);
 				close(socket_client_interface.socket_fd);
 				exit(0);
 			} 	
