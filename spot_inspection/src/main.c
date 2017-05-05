@@ -32,8 +32,6 @@
 #include "com_tools.h"
 
 int shift_virb = 27;
-//int is_reset_para = 0;
-int DEBUG = 0;
 int package_freq=20;
 char enable_mode[3]="000";
 char connect_flag[3]= {0, 0, 0};
@@ -50,7 +48,6 @@ Usage: gpio_ir_app [option] [option parameter]\n\
 -v  read the version of this software\n\
 -f  freq of sending package \n\
 -e  enable the working model: enable the first bit means enable zigbee, second means server, third  means client; eg:111 means enable all\n\
--D  debug model, display the ad result\n\
 -S  the server IP address\n\
 -P  the server PORT\n\
 -C  calibrate the virb shift\n\
@@ -60,6 +57,7 @@ static void ProductInfoInit(void);
 static void EnvironmentInit(void);
 static void paraInit(void);
 static void systemInit(void);
+static void TimerInit(void);
 static int parse_opt(const char opt, const char *optarg);
 static int open_fifos(char * fifo_path, SOCKET_INTERFACE *socket_interface);
 
@@ -72,15 +70,12 @@ int parse_opt(const char opt, const char *optarg)
 	switch(opt)
     {
     case 'h':
-        PLOG("%s\n",usage);
+        printf("%s\n",usage);
         exit(0);
         break;
     case 'v':
-        PLOG("produc_info.mac:%s,produc_info.hw_vers:%s,produc_info.sw_vers :%s\n",produc_info.mac,produc_info.hw_vers,produc_info.sw_vers );
+        ProductInfoInit();
         exit(0);
-        break;
-    case 'D':
-        DEBUG = 1;
         break;
     case 'S':
 	
@@ -124,16 +119,13 @@ int open_fifos(char * fifo_path, SOCKET_INTERFACE *socket_interface)
             return -1;
         }
     }
-    /* 打开管道 */
     (*socket_interface).fifo_rd_fd=open(fifo_path,O_RDONLY|O_NONBLOCK);
     if((*socket_interface).fifo_rd_fd==-1)
     {
         perror("open");
         exit(1);
     }
-    //else
-    //PLOG("###Open %s successed!###\n",(*socket_interface).fifo_rd_fd);
-    // PLOG("socket_interface.fifo_rd_fd is %d\n", (*socket_interface).fifo_rd_fd);
+
     strcpy((*socket_interface).fifo_path, fifo_path);
     return 0;
 }
@@ -168,7 +160,7 @@ static void ProductInfoInit(void)
 	  getSysUciCfgStr("spot_inspection","product_info","hw_vers",produc_info.hw_vers);
 	  getSysUciCfgStr("spot_inspection","product_info","sw_vers",produc_info.sw_vers);
 
-	  PLOG("produc_info.mac:%s,produc_info.hw_vers:%s,produc_info.sw_vers :%s\n",produc_info.mac,produc_info.hw_vers,produc_info.sw_vers );
+	  printf("produc_info.mac:%s,produc_info.hw_vers:%s,produc_info.sw_vers :%s\n",produc_info.mac,produc_info.hw_vers,produc_info.sw_vers );
 }
 //-----------------------------------------------
 static void DevAndFifoFileInit(void)
@@ -192,12 +184,20 @@ static void DevAndFifoFileInit(void)
     open_fifos(SOCKET_SERVER_FIFO_PATH, &socket_server_interface);
 }
 
+static void TimerInit(void)
+{
+    init_sigaction();
+    init_time(5000);
+}
+
+	
 //-----------------------------------------------
 static void paraInit(void)
 {
 	getSysUciCfgStr("spot_inspection","para","enable_mode",enable_mode);
-	getSysUciCfgNum("spot_inspection","para","package_freq");
-	getSysUciCfgNum("spot_inspection","para","virb_shift");
+	package_freq=getSysUciCfgNum("spot_inspection","para","package_freq");
+	shift_virb=getSysUciCfgNum("spot_inspection","para","virb_shift");
+
 }
 
 //-----------------------------------------------
@@ -207,9 +207,7 @@ static void systemInit(void)
 	DevAndFifoFileInit();
 	ProductInfoInit();
 	EnvironmentInit();
-	shift_virb = getSysUciCfgNum("spot_inspection","para","virb_shift"); 
-	PLOG("the shift_virb is %d",shift_virb);
-
+	TimerInit();
 	//--------------------------------------------------------------------------init the server socket_fd
      socket_server_interface.server_fd = socketServerInitNoneBlock(3333);
      if (socket_server_interface.server_fd < 0)
@@ -223,16 +221,15 @@ static void systemInit(void)
 //----------------------------------------------main
 int main(int argc,char *argv[])
 {
-    char opt;
+    	char opt;
 	char  cloud_ip[16] = {0};
 	int cloud_port;
-	systemInit();
-	
 	while((opt = getopt(argc, argv, optstring)) != -1)
     {
-
         parse_opt(opt, optarg);
     }  
+	systemInit();
+	
 
     //--------------------------------------------------------------------------open the forks of ser2net socket_client, socket_server
 	if (enable_mode[0] == '1')

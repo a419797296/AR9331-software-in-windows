@@ -61,6 +61,25 @@ void sendProductInfo(int sockfd)
 	cJSON_Delete(root);	
 	free(out);
 }
+
+//-----------------------------------------------------
+void sendAlarmInfo(int sockfd, sysAlarm sys_alarm)
+{
+	cJSON *root;
+	char *out;
+
+	root=cJSON_CreateObject();
+	cJSON_AddNumberToObject(root, "jsonType", JSON_TYPE_SYS_ALARM);
+	cJSON_AddNumberToObject(root, "alarmNum", sys_alarm);
+	cJSON_AddStringToObject(root, "productMac", produc_info.mac);
+	out=cJSON_PrintUnformatted(root);
+	// sprintf(outcmd,"%s",out);	
+	 // printf("%d\n",strlen(out));	
+	socketWriteNoEnd(sockfd,out,strlen(out)+1);
+	cJSON_Delete(root);	
+	free(out);
+}
+
 //*****************************************************************************
 //函数名：SendStringSCIByPackage
 //参  数：无
@@ -284,7 +303,7 @@ int setSysUciCfgNum(char *filename,char *section,char *option,int parameter)
 //-----------------------------------------------
 int calc_system_soc(void)
 {
-    uint16 system_soc=0;
+    int system_soc=0;
     set_acqusition_para(10, 1, 1, "2");
     channel_info=malloc_result_buf(acqusition_para.valid_channel_nums, acqusition_para.length);		// free(channel_info);
     acqusition_ad_data(ad7606_app.dev_fd, acqusition_para, channel_info);
@@ -296,7 +315,7 @@ int calc_system_soc(void)
     if(system_soc < 3300)
         system_soc = 3300;
     system_soc = (system_soc - 3300) / 8;
-    return (int)system_soc;
+    return system_soc;
 }
 
 int calc_shift_virb(void)
@@ -316,4 +335,91 @@ int calc_shift_virb(void)
 		virb_shitf ++;
     return virb_shitf;
 }
+//-----------------------calulate the xor-------------------------------
+char XorCheckSum(char * pBuf, char len)
+{
+  int i;
+  char byRet=0;
+  
+  if(len == 0)
+    return byRet;
+  else
+    byRet = pBuf[0];
+  
+  for(i = 1; i < len; i ++)
+    byRet = byRet ^ pBuf[i];
+  
+  return byRet;
+}
+//-----------------------------------------------------
+int getDataPkgFromSerial(char *conbined_buf, int *conbined_len, char *new_data, int new_data_len, char first_byte, char end_byte, int max_pkg_len)  //if end_byte ==0.means if recieved 0,then return;end_byte ==0xff, ignore the end byte;else,must match the end byte. 
+{
+	PLOG("------%s,data len is %d,------\n",new_data,*conbined_len);
+	memcpy(conbined_buf + *conbined_len, new_data, new_data_len);
+	*conbined_len=*conbined_len+new_data_len;
+	if(end_byte=='\0')
+		{
+		if(new_data[new_data_len-1]!=end_byte)
+			{
+			if(*conbined_len>max_pkg_len)
+				*conbined_len=0;
+			return 0;
+		}
+		else
+			{
+			return 1;
+		}
 
+	}
+	else
+		{
+		if(*conbined_len==0)
+			{
+			if(first_byte!='\0')
+				{
+				if(new_data[0]!=first_byte)
+					{
+					*conbined_len=0;
+					PLOG("can not match the first byte");
+					return 0;
+				}
+					
+			}
+		}
+		char xor;
+		int data_len,pkg_len;
+		data_len=*(conbined_buf+4);
+		pkg_len=data_len+8;
+
+		if(*conbined_len>=max_pkg_len||*conbined_len>=pkg_len)
+			{
+			
+			if(end_byte!=0xff)
+				{
+				if(new_data[new_data_len-1]!=end_byte)
+					{
+					PLOG("can not match the end byte");
+					*conbined_len=0;
+					return 0;
+				}
+			}
+					
+
+			xor=XorCheckSum(conbined_buf+2,data_len+3); //add the 2 byte of addr, 1 byte of len, so in total is 3bytes
+			if(xor==*(conbined_buf+data_len+5))   //24 40 00 00 len data xor
+				return 1;					//here is packaged, return 0 means OK;
+			else
+				{
+				PLOG("can not match the xor byte");
+				*conbined_len=0;
+				return 0;
+			}
+				
+				
+		}
+		else
+			return 0; //not packaged, then return		
+	}
+	return 0; //not packaged, then return	
+
+}

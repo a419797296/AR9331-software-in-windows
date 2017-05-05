@@ -1,10 +1,10 @@
 /*
  * ad7606_app.c
  *
- *  Created on: 2015-5-10
- *      Author: robinson <wurobinson@joysince.com>
- * Description: This program is written for js9331 development board ,
- * 				 work with gpio_ir_driver
+ *  Created on: 2016-10-10
+ *      Author: Blue<ge.blue@willtech-sh.com>
+ * Description: This program is written for acquice the ad7606 ad IC ,
+ * 				 
  */
 
 #include <stdio.h>
@@ -30,7 +30,7 @@ AD7606_ACQUSITION_PARA 	acqusition_para;
 //-----------------------------------------------------------------------
 int acqusition_ad_data(int fd, AD7606_ACQUSITION_PARA acqusition_para, AD7606_CHANNEL_INFO *channel_info)
 {
-	int i, j, length, read_nums;
+	int length, read_nums;
 	char channel_nums;
 	int struct_length, data_length;
 
@@ -50,19 +50,9 @@ int acqusition_ad_data(int fd, AD7606_ACQUSITION_PARA acqusition_para, AD7606_CH
 		perror("###read###");
 		return -1;
 	}
-
-	if (DEBUG)
-	{
-		// PLOG("------------here is the channel information-----\n");
-		// for (i = 0; i < (read_nums >> 1) ; ++i)
-		// {
-		// 	if (i % 10 == 0)
-		// 	{
-		// 		PLOG("\n");
-		// 	}
-		// 	PLOG("%6d",*((short int *)channel_info + i ));	
-		// }
-		// PLOG("\n-------------over-------\n");
+//#define DEBUG
+#ifdef DEBUG
+		int i, j;
 		for (i = 0; i < channel_nums; ++i)
 		{
 			PLOG("------------here is the AD datas of channel %d -----\n", (*(channel_info+i)).num);
@@ -74,7 +64,8 @@ int acqusition_ad_data(int fd, AD7606_ACQUSITION_PARA acqusition_para, AD7606_CH
 			}
 			PLOG("\n");
 		}
-	}
+#endif
+
 	return 0;
 }
 

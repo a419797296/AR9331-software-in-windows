@@ -27,7 +27,7 @@ int socket_bussiness(void)
 
     int result;
     fd_set inputs;
-    uint8 soc=0;
+
     struct timeval timeout;
     PLOG("Preparing for reading bytes...\n");
     while(1)
@@ -90,8 +90,14 @@ int socket_bussiness(void)
             // PLOG("timeout\n");
             break;
         case -1:
-            perror("select");
-            exit(1);
+	        if (errno == EINTR)
+	        	{
+	        	PLOG("interruput by timer\n\n");
+ 			continue;
+		}
+	           
+	        else
+            		perror("select");
         default:
 
             read_and_do_with_fifo_data(&socket_ser2net_interface, inputs);
@@ -101,12 +107,7 @@ int socket_bussiness(void)
             break;
 
         }
-        soc = calc_system_soc();
-        if(soc < LOW_POWER_ALARM_LEVEL)
-        {
-            system("/root/led.sh blink_fail tp-link:blue:system");
-        }
-        PLOG("-------------the  system_soc is %d%%-----------\n",soc);
+
     }
     pause(); /*暂停，等待信号*/
     unlink(SOCKET_CLIENT_FIFO_PATH); //删除文件
@@ -177,17 +178,8 @@ void doit(char *receivedData, int dataLength)
             socketWriteNoEnd(socket_server_interface.socket_fd, receivedData, dataLength+1);   //+1 means sent '/0' together
             PLOG("%c\n", *(enable_mode+1));
         }
-
         if (*(enable_mode+2)=='1')//if the app works in client model, then send the data back to server
             socketWriteNoEnd(socket_client_interface.socket_fd, receivedData, dataLength+1);   //+1 means sent '/0' together
-        break;
-    case JSON_TYPE_DATA_REPOART:
-        PLOG("jsonType is DATA_REPOART\r\n");
-        doDataReport(receivedData);
-        break;
-    case JSON_TYPE_OXYGEN:
-        PLOG("jsonType is JSON_TYPE_OXYGEN\r\n");
-        oxygenFlowReport(receivedData);
         break;
     default:
         PLOG("jsonType is default+\r\n");
@@ -198,7 +190,7 @@ void doit(char *receivedData, int dataLength)
 jsonType judgeJsonType(char * receivedData, int dataLength)
 {
     cJSON *json;
-    static jsonType json_type;
+    static jsonType json_type=JSON_TYPE_ERROR;
     if(*receivedData=='{')
     {
         json=cJSON_Parse(receivedData);
@@ -212,21 +204,19 @@ jsonType judgeJsonType(char * receivedData, int dataLength)
             cJSON_Delete(json);
         }
     }
-    else if(*receivedData==0x16)
-        json_type = JSON_TYPE_OXYGEN;
-    else
-    {
-        if (receivedData[0]=='$' && receivedData[1]=='@' && receivedData[dataLength-2]=='\r' && receivedData[dataLength-1]=='\n')
-        {
-            PLOG("------------------success+++success--%d------------\n",dataLength);
-            json_type = JSON_TYPE_GETWAY_TO_ZIGBEE;
-        }
-        else
-        {
-            PLOG("------------------ERROR+++success--%d------------\n",dataLength);
-            json_type = JSON_TYPE_ERROR;
-        }
-    }
+	else
+	{
+	        if (receivedData[0]=='$' && receivedData[1]=='@' && receivedData[dataLength-2]=='\r' && receivedData[dataLength-1]=='\n')
+	        {
+	            PLOG("------------------success+++success--%d------------\n",dataLength);
+	            json_type = JSON_TYPE_GETWAY_TO_ZIGBEE;
+	        }
+	        else
+	        {
+	            PLOG("------------------ERROR+++success--%d------------\n",dataLength);
+	            json_type = JSON_TYPE_ERROR;
+	        }
+	}
     return json_type;
 }
 void doControlInfo(char *receivedData)
@@ -302,16 +292,7 @@ void doControlInfo(char *receivedData)
             {
             	PLOG("this the zigbee modle\n");
             	socketWriteByPackages(fd, out, 32, 25000);   //32bytes per package, and the time interval is 25ms
-            }
-            else
-            {
-
-            	if (MATLAB_TEST)
-            		socketWriteNoEnd(socket_client_interface.socket_fd, (char *)(*(channel_info+i)).data, (length<<1));
-            	else
-            		socketWriteNoEnd(fd, out, strlen(out)+1);   //+1 means sent '/0' together
             }*/
-
 
 
             free(out);	/* Print to text, Delete the cJSON, print it, release the string. */
@@ -386,15 +367,7 @@ void doControlInfo(char *receivedData)
 
 
                 /*if (fd == tty_interface.socket_fd)
-                	socketWriteByPackages(fd, out, 32, 25000);   //32bytes per package, and the time interval is 25ms
-                else
-                {
-
-                	if (MATLAB_TEST)
-                		socketWriteNoEnd(socket_client_interface.socket_fd, (char *)(*(channel_info+i)).data, (PACKAGE_LENGTH<<1));
-                	else
-                		socketWriteNoEnd(fd, out, strlen(out)+1);   //+1 means sent '/0' together
-                }*/
+                	socketWriteByPackages(fd, out, 32, 25000);   //32bytes per package, and the time interval is 25ms*/
 
                 free(out);	/* Print to text, Delete the cJSON, print it, release the string. */
                 free(disp);
@@ -403,100 +376,10 @@ void doControlInfo(char *receivedData)
 
         }
 
-
-        // //------------------------------------------------------------采集剩下的
-        // data_residual_length = length % PACKAGE_LENGTH;
-        // if (data_residual_length != 0)
-        // {
-        // 	PLOG("---------[data_residual_length is %d]-------\n", data_residual_length);
-        // 	// set_acqusition_para(freq, data_residual_length, channel_nums, channel_list);
-        // 	// channel_info=malloc_result_buf(acqusition_para.valid_channel_nums, data_residual_length);		// free(channel_info);
-        // 	acqusition_ad_data(ad7606_app.dev_fd, acqusition_para, channel_info);
-        // 	for (i = 0; i < channel_nums; ++i)
-        // 	{
-        // 		HexToStr(data_hex2str, (char *)(*(channel_info+i)).data, (data_residual_length<<1));
-
-        // 		channel_json=cJSON_CreateObject();
-        // 		cJSON_AddNumberToObject(channel_json,"num",		(*(channel_info+i)).num);
-        // 		cJSON_AddStringToObject(channel_json,"name",		"virb_sens0");
-        // 		cJSON_AddStringToObject(channel_json,"data",		data_hex2str);
-        // 		cJSON_ReplaceItemInObject(json, "channel_info", 	channel_json);
-
-        // 		out=cJSON_PrintUnformatted(json);
-        // 		disp = cJSON_Print(json);
-        // 		PLOG("%s\n",disp);
-        // 		socketWriteNoEnd(socket_client_interface.socket_fd, out, strlen(out));
-        // 		free(out);	/* Print to text, Delete the cJSON, print it, release the string. */
-        // 		free(disp);
-        // 		PLOG("---------[package %d is finished, the total package is %d]-------\n", j,data_packages);
-        // 		// socketWriteNoEnd(socket_client_interface.socket_fd, (char *)(*(channel_info+i)).data, (data_residual_length<<1));
-        // 		// socketWriteWithEnd(socket_client_interface.socket_fd, (char *)(*(channel_info+i)).data, (data_residual_length<<1), end_flag, 2);
-        // 	}
-        // }
-
     }
     free(channel_info);
     cJSON_Delete(json);
 }
-
-
-
-void doDataReport(char *receivedData)
-{
-    cJSON *json;
-    int timeInterval;
-    int freq,length;
-    char *channels, channel_nums;
-    char channel_list[8]= {0};
-    // int i,j;
-    PLOG("receivedData = %s\n",receivedData);
-
-    //------------------获取参数----
-    json=cJSON_Parse(receivedData);
-    freq = cJSON_GetObjectItem(json,"freq")->valueint;
-    length = cJSON_GetObjectItem(json,"sampleNum")->valueint;
-    timeInterval = cJSON_GetObjectItem(json,"timeInterval")->valueint;
-    channels = cJSON_GetObjectItem(json,"channelList")->valuestring;
-    channel_nums = strlen(channels);
-    strcpy(channel_list,channels);
-    //执行
-    set_acqusition_para(freq, length, channel_nums, channel_list);
-    channel_info=malloc_result_buf(acqusition_para.valid_channel_nums, (acqusition_para.length<<1));		// free(channel_info);
-    init_sigaction();
-    init_time(timeInterval);
-    cJSON_Delete(json);
-}
-
-void oxygenFlowReport(char *receivedData)
-{
-    uint16 oxygen=0;
-    uint16 flow=0;
-    uint16 temp=0;
-    cJSON *root;
-    char *out;
-    oxygen=BUILD_UINT16(*(receivedData+3),*(receivedData+4));
-    flow=BUILD_UINT16(*(receivedData+5),*(receivedData+6));
-    temp=BUILD_UINT16(*(receivedData+7),*(receivedData+8));
-    root=cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "jsonType", JSON_TYPE_ZIGBEE_TO_GETWAY);
-    cJSON_AddNumberToObject(root, "cmd", 100);
-    cJSON_AddNumberToObject(root, "oxygen", oxygen);
-    cJSON_AddNumberToObject(root, "flow", flow);
-    cJSON_AddNumberToObject(root, "temp", temp);
-    out=cJSON_PrintUnformatted(root);
-    if (*(enable_mode+1)=='1')//if the app works in server model, then send the data back to client
-    {
-        socketWriteNoEnd(socket_server_interface.socket_fd, out, strlen(out)+1);   //+1 means sent '/0' together
-        PLOG("%c\n", *(enable_mode+1));
-    }
-
-    if (*(enable_mode+2)=='1')//if the app works in client model, then send the data back to server
-        socketWriteNoEnd(socket_client_interface.socket_fd, out, strlen(out)+1);   //+1 means sent '/0' together
-
-    cJSON_Delete(root);
-    free(out);
-}
-
 
 
 //----------------------------------------------
@@ -526,11 +409,27 @@ void sigalrm_read_ad_value(int sig)
     return;
 }
 
+//----------------------------------------------
+void systemTimerCallback(int sig)
+{
+	  uint8 soc=0;
+	  soc = calc_system_soc();
+        if(soc < LOW_POWER_ALARM_LEVEL)
+        {
+            system("/root/led.sh blink_fail tp-link:blue:system");
+		if (*(enable_mode+1)=='1')//if the app works in server model, then send the data back to client
+                sendAlarmInfo(socket_server_interface.socket_fd, SYS_ALARM_LOW_POW);
+            if (*(enable_mode+2)=='1')//if the app works in client model, then send the data back to server
+                sendAlarmInfo(socket_client_interface.socket_fd, SYS_ALARM_LOW_POW);	
+        }
+        PLOG("-------------the  system_soc is %d%%-----------\n",soc);
+}
+
 //------------------------------------------------
 void init_sigaction(void)
 {
     struct sigaction tact;
-    tact.sa_handler = sigalrm_read_ad_value;
+    tact.sa_handler = systemTimerCallback;
     tact.sa_flags = 0;
     sigemptyset(&tact.sa_mask);
     sigaction(SIGALRM, &tact, NULL);

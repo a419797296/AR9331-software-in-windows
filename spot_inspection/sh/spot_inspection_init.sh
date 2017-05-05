@@ -26,5 +26,6 @@ if [ $? -ne 0 ];then
 #else
 #	echo "the model of ad7606_driver has already been installed"	
 fi
+spot_inspection
 
 

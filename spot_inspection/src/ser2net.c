@@ -9,13 +9,14 @@
 
 #include "ser2net.h"
 #include "socket_driver.h"
+#include "com_tools.h"
 #include "main.h"
 SOCKET_INTERFACE socket_ser2net_interface;
 SOCKET_INTERFACE tty_interface;
 //----------------------------------serToNet服务进程------
 int serToNetFork()
 {
-    int nbytes;
+    int nbytes=0;
     int allNum=0;
     char readbuff[256];
     char package[SOCKET_SER2NET_PACK_NUMS];
@@ -61,61 +62,8 @@ int serToNetFork()
             }
             else
             {
-#ifdef SOCKET_SER2NET_END_WITH_NULL
-                strncpy(readbuff + allNum, package, nbytes);
-                // PLOG("the current package is %s\n", package);
-                PLOG("the current readbuff is %s\n", readbuff);
-                allNum += nbytes;
+			fullPackaged = getDataPkgFromSerial(readbuff, &allNum, package, nbytes, '{', '\0', 256) ; 
 
-                if (package[nbytes - 1] == '\0')   //读到的最后一位不为零, 读取完毕
-                {
-                    fullPackaged = 1;
-                }
-#endif
-
-#ifdef SOCKET_SER2NET_END_WITH_LENGTH
-
-		
-		  memcpy(readbuff + allNum, package, nbytes);
-                // PLOG("the current package is %s\n", package);
-                PLOG("the current readbuff is %s\n", readbuff);
-                allNum += nbytes;
-				
-                if(readbuff[0]!=0x16)
-                {
-			PLOG("first byte error :%x\n",readbuff[0]);
-			allNum = 0;
-                    memset(readbuff, '\0', sizeof(readbuff));
-			continue;
-                }				
-				
-                if(allNum >= SOCKET_SER2NET_FIX_LENGTH)
-                {
-                    PLOG("nbytes is : %d, readbuff is :%s\n",allNum,readbuff);
-                    int i=0;
-                    unsigned char xor=0;
-                    for(i=0; i<allNum; i++)
-                    {
-                        PLOG("%02x ",(unsigned char)readbuff[i]);
-                        if(i<11)
-                            xor-=readbuff[i];
-
-                    }
-                    PLOG("\nthe xor is %02x \n",xor);
-                    /*PLOG("\nthe soc is %02x \n",soc);*/
-                    if(xor==(unsigned char)readbuff[11])
-                    {
-                        fullPackaged =1;
-                    }
-                    else
-                    {
-                        allNum = 0;
-                        memset(readbuff, '\0', sizeof(readbuff));
-                    }
-                }
-
-
-#endif
                 if(fullPackaged)
                 {
                     fullPackaged = 0;

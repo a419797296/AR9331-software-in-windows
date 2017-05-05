@@ -9,12 +9,7 @@
 
 #define SOCKET_SER2NET_FIFO_PATH			"/tmp/socket_ser2net_fifo"
 #define SOCKET_SER2NET_NUM			0
-#define SOCKET_SER2NET_END_WITH_NULL			
-//#define SOCKET_SER2NET_END_WITH_LENGTH	
 
-#ifdef SOCKET_SER2NET_END_WITH_LENGTH
-#define SOCKET_SER2NET_FIX_LENGTH						12
-#endif
 
 extern SOCKET_INTERFACE socket_ser2net_interface;
 

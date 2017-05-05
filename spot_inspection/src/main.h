@@ -29,8 +29,7 @@ typedef unsigned char   bool;
 #define HI_UINT8(a) (((a) >> 4) & 0x0F)
 #define LO_UINT8(a) ((a) & 0x0F)
 
-
- #define PDEBUG				1//Byte
+ //#define PDEBUG
 #ifdef PDEBUG
  #define PLOG(fmt, args...) printf(fmt, ## args)
  #else
@@ -46,9 +45,14 @@ typedef enum
 	JSON_TYPE_CONTROL_CMD,
 	JSON_TYPE_DATA_REPOART,
 	JSON_TYPE_PRODUCT_INFO,
-	JSON_TYPE_OXYGEN,
+	JSON_TYPE_SYS_ALARM,
 	JSON_TYPE_ERROR
 }jsonType;
+
+ typedef enum
+{
+	SYS_ALARM_LOW_POW = 1,
+}sysAlarm;
 
  typedef struct{
 	char		*data;
@@ -68,9 +72,8 @@ typedef enum
 #define	SOFTWARE_VERSION				"20161218"
 #define 	DATA_FIFO_PATH				"/tmp/data_fifo"
 
-#define	LOW_POWER_ALARM_LEVEL		20
+#define	LOW_POWER_ALARM_LEVEL		30
 
-extern int DEBUG;
 extern int package_freq;
 extern char enable_mode[3];
 extern char connect_flag[3];
