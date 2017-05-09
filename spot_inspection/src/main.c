@@ -153,10 +153,11 @@ static void ProductInfoInit(void)
 	  memset(produc_info.hw_vers, 0, sizeof(produc_info.hw_vers));
 	  memset(produc_info.sw_vers, 0, sizeof(produc_info.sw_vers));
 	  memset(produc_info.mac, 0, sizeof(produc_info.mac));
-	  if(getMacAddr("eth0",produc_info.mac) == -1)
+	 /* if(getMacAddr("eth0",produc_info.mac) == -1)
 	  {
 	      printf("read the mac error: readed data is %s\n", produc_info.mac);
-	  }
+	  }*/
+	  getSysUciCfgStr("spot_inspection","product_info","mac",produc_info.mac);
 	  getSysUciCfgStr("spot_inspection","product_info","hw_vers",produc_info.hw_vers);
 	  getSysUciCfgStr("spot_inspection","product_info","sw_vers",produc_info.sw_vers);
 
@@ -187,7 +188,7 @@ static void DevAndFifoFileInit(void)
 static void TimerInit(void)
 {
     init_sigaction();
-    init_time(5000);
+    init_time(20000);
 }
 
 	

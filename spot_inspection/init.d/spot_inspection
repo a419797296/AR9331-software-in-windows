@@ -2,7 +2,7 @@
 # Copyright (C) 2006-2010 OpenWrt.org
 # Copyright (C) 2006 Carlos Sobrinho
 
-START=60
+START=99
 
 PROG=/bin/spot_inspection
 NAME=spot_inspection
@@ -10,11 +10,8 @@ NAME=spot_inspection
 
 start()
 {
-	if [ $(pgrep -f spot_inspection |wc -l) = "1" ]
-	then
-		kill $(pidof spot_inspection)
-	fi
-	/bin/spot_inspection
+	kill $(pidof spot_inspection)
+	/root/spot_inspection_init.sh
 }
 
 stop()

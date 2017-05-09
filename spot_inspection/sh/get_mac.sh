@@ -8,5 +8,5 @@ then
 fi
 mac=`ifconfig $1|grep 'HWaddr'|awk -F '[ ]+' '{print $5}`
 echo $mac
-uci set oxygen.product_info.mac=$mac
+uci set spot_inspection.product_info.mac=$mac
 uci commit

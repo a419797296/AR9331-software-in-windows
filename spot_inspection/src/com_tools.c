@@ -67,7 +67,8 @@ void sendAlarmInfo(int sockfd, sysAlarm sys_alarm)
 {
 	cJSON *root;
 	char *out;
-
+	if(sockfd<=0)
+		return;
 	root=cJSON_CreateObject();
 	cJSON_AddNumberToObject(root, "jsonType", JSON_TYPE_SYS_ALARM);
 	cJSON_AddNumberToObject(root, "alarmNum", sys_alarm);

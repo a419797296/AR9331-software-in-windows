@@ -18,7 +18,7 @@
 include $(TOPDIR)/rules.mk
 # Name and release number of this package
 PKG_NAME:=spot_inspection
-PKG_RELEASE:=1.0.1
+PKG_RELEASE:=1.0.3
 
 
 # This specifies the directory where we're going to build the program. 
@@ -92,8 +92,22 @@ define Package/spot_inspection/install
 	$(INSTALL_DIR) $(1)/root
 	$(INSTALL_BIN) ./sh/*.sh $(1)/root/
 
+	#$(INSTALL_DIR) $(1)/etc/rc.d
+	#$(INSTALL_BIN) ./rc.d/* $(1)/etc/rc.d
+
 endef
 
+
+define Package/$(PKG_NAME)/postinst
+#!/bin/sh 
+[ -n "${IPKG_INSTROOT}" ] || {
+	/etc/init.d/spot_inspection enable
+	/etc/init.d/spot_inspection start
+	touch /root/success
+	echo starting the app ...
+	exit 0
+}
+endef
 
 # This line executes the necessary commands to compile our program.
 # The above define directives specify all the information needed, but this

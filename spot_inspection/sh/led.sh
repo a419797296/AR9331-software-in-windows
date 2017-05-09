@@ -16,6 +16,8 @@ blink_fast)
 	status_led_blink_fast $status_led;;
 blink_preinit)
 	status_led_blink_preinit $status_led;;
+blink_fail)
+        status_led_blink_failsafe $status_led;;
 *)
 	echo "error"
 esac

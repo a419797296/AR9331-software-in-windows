@@ -1,5 +1,6 @@
 #!/bin/sh
 
+/root/get_mac.sh eth0
 cat /etc/ser2net.conf | grep 6666
 if [ $? -ne 0 ];then
 	echo 6666:raw:0:/dev/ttyATH0:115200 NONE 1STOPBIT 8DATABITS   -RTSCTS >> /etc/ser2net.conf
